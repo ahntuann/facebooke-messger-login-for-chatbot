@@ -44,33 +44,25 @@
       })(document, "script", "facebook-jssdk");
 
       function loginWithFacebook() {
-        FB.login(
-          function (response) {
-            if (response.authResponse) {
-              const accessToken = response.authResponse.accessToken;
-              console.log("Logged in, accessToken:", accessToken);
+        if (typeof FB === "undefined") {
+          alert("Facebook SDK chưa sẵn sàng. Thử lại sau.");
+          return;
+        }
 
-              // Gọi API Facebook thật để lấy danh sách Page
-              fetch(
-                `https://graph.facebook.com/me/accounts?access_token=${accessToken}`
-              )
-                .then((res) => res.json())
-                .then((data) => {
-                  console.log("Page Data:", data);
-                  renderPages(data.data, accessToken);
-                })
-                .catch((err) => {
-                  console.error("Error fetching pages:", err);
-                });
-            } else {
-              alert("Login failed or canceled.");
+        FB.getLoginStatus(function (response) {
+          FB.login(
+            function (response) {
+              if (response.authResponse) {
+                const accessToken = response.authResponse.accessToken;
+                // Gọi API tiếp ở đây...
+              }
+            },
+            {
+              scope:
+                "pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging",
             }
-          },
-          {
-            scope:
-              "pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging",
-          }
-        );
+          );
+        });
       }
 
       function renderPages(pages, token) {
