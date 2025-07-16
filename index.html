@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FB Chatbot Reviewer Demo</title>
+  </head>
+  <body>
+    <h1>FB Chatbot Reviewer Demo</h1>
+
+    <!-- B1: Login bằng FB -->
+    <button onclick="loginWithFacebook()">Login with Facebook</button>
+
+    <!-- B3: Privacy Policy link -->
+    <p>
+      This app is governed by Facebook policy.
+      <a href="https://yourdomain.com/privacy-policy.html" target="_blank"
+        >Read our Privacy Policy</a
+      >
+    </p>
+
+    <!-- B5: List Page -->
+    <div id="pages"></div>
+
+    <!-- FB SDK -->
+    <script>
+      window.fbAsyncInit = function () {
+        FB.init({
+          appId: "YOUR_APP_ID", // 🔁 Thay bằng App ID thật
+          cookie: true,
+          xfbml: true,
+          version: "v19.0", // 🔁 Sử dụng version mới
+        });
+      };
+
+      (function (d, s, id) {
+        let js,
+          fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {
+          return;
+        }
+        js = d.createElement(s);
+        js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      })(document, "script", "facebook-jssdk");
+
+      function loginWithFacebook() {
+        FB.login(
+          function (response) {
+            if (response.authResponse) {
+              const accessToken = response.authResponse.accessToken;
+              console.log("Logged in, accessToken:", accessToken);
+
+              // Gọi API Facebook thật để lấy danh sách Page
+              fetch(
+                `https://graph.facebook.com/me/accounts?access_token=${accessToken}`
+              )
+                .then((res) => res.json())
+                .then((data) => {
+                  console.log("Page Data:", data);
+                  renderPages(data.data, accessToken);
+                })
+                .catch((err) => {
+                  console.error("Error fetching pages:", err);
+                });
+            } else {
+              alert("Login failed or canceled.");
+            }
+          },
+          {
+            scope:
+              "pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging",
+          }
+        );
+      }
+
+      function renderPages(pages, token) {
+        const container = document.getElementById("pages");
+        container.innerHTML = "<h3>Connected Pages:</h3>";
+        pages.forEach((page) => {
+          const pageDiv = document.createElement("div");
+          pageDiv.innerHTML = `
+                    <p>
+                        Page Name: <strong>${page.name}</strong><br>
+                        Page ID: <strong>${page.id}</strong><br>
+                        <button onclick='connectPage("${page.id}", "${page.name}", "${page.access_token}")'>Connect this Page</button>
+                    </p>
+                    <hr>
+                `;
+          container.appendChild(pageDiv);
+        });
+      }
+
+      function connectPage(id, name, pageToken) {
+        // Đây là nơi bạn lưu vào DB nếu có backend - ở đây chỉ hiển thị đơn giản
+        const container = document.getElementById("pages");
+        container.innerHTML = `
+                <h3>Status:</h3>
+                <p>✅ Page "<strong>${name}</strong>" (ID: ${id}) connected successfully!</p>
+            `;
+        console.log("Page connected:", { id, name, token: pageToken });
+      }
+    </script>
+  </body>
+</html>
