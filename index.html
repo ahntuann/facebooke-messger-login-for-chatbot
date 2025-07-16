@@ -70,6 +70,8 @@
             if (response.authResponse) {
               const accessToken = response.authResponse.accessToken;
 
+              console.log("Login successful:", accessToken, response);
+
               // Gọi API lấy page thật
               fetch(
                 `https://graph.facebook.com/me/accounts?access_token=${accessToken}`
