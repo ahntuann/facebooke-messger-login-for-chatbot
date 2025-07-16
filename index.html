@@ -7,7 +7,13 @@
     <h1>FB Chatbot Reviewer Demo</h1>
 
     <!-- B1: Login bằng FB -->
-    <button onclick="loginWithFacebook()">Login with Facebook</button>
+    <button
+      id="fb-login-btn"
+      onclick="loginWithFacebook()"
+      style="display: none"
+    >
+      Login with Facebook
+    </button>
 
     <!-- B3: Privacy Policy link -->
     <p>
@@ -22,57 +28,68 @@
 
     <!-- FB SDK -->
     <script>
+      // Khai báo biến cờ
+      let fbSdkReady = false;
+
+      // SDK đã load xong → init xong
       window.fbAsyncInit = function () {
         FB.init({
-          appId: "YOUR_APP_ID", // 🔁 Thay bằng App ID thật
+          appId: "1374905703795890",
           cookie: true,
           xfbml: true,
-          version: "v19.0", // 🔁 Sử dụng version mới
+          version: "v19.0",
         });
+
+        // Đánh dấu SDK đã sẵn sàng
+        fbSdkReady = true;
+        document.getElementById("fb-login-btn").style.display = "inline-block";
       };
 
+      // Tải SDK
       (function (d, s, id) {
         let js,
           fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) {
-          return;
-        }
+        if (d.getElementById(id)) return;
         js = d.createElement(s);
         js.id = id;
         js.src = "https://connect.facebook.net/en_US/sdk.js";
         fjs.parentNode.insertBefore(js, fjs);
       })(document, "script", "facebook-jssdk");
 
+      // Chờ SDK sẵn sàng trước khi login
       function loginWithFacebook() {
-        if (typeof FB === "undefined") {
-          alert("Facebook SDK chưa sẵn sàng. Thử lại sau.");
+        if (!fbSdkReady || typeof FB === "undefined") {
+          alert(
+            "⚠️ Facebook SDK chưa sẵn sàng. Vui lòng đợi vài giây rồi thử lại."
+          );
           return;
         }
 
-        FB.getLoginStatus(function (response) {
-          FB.login(
-            function (response) {
-              if (response.authResponse) {
-                const accessToken = response.authResponse.accessToken;
-                fetch(
-                  `https://graph.facebook.com/me/accounts?access_token=${accessToken}`
-                )
-                  .then((res) => res.json())
-                  .then((data) => {
-                    console.log("Page Data:", data);
-                    renderPages(data.data, accessToken);
-                  })
-                  .catch((err) => {
-                    console.error("Error fetching pages:", err);
-                  });
-              }
-            },
-            {
-              scope:
-                "pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging",
+        FB.login(
+          function (response) {
+            if (response.authResponse) {
+              const accessToken = response.authResponse.accessToken;
+
+              // Gọi API lấy page thật
+              fetch(
+                `https://graph.facebook.com/me/accounts?access_token=${accessToken}`
+              )
+                .then((res) => res.json())
+                .then((data) => {
+                  renderPages(data.data, accessToken);
+                })
+                .catch((err) => {
+                  console.error("Lỗi lấy page:", err);
+                });
+            } else {
+              alert("Login bị huỷ hoặc thất bại.");
             }
-          );
-        });
+          },
+          {
+            scope:
+              "pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging",
+          }
+        );
       }
 
       function renderPages(pages, token) {
